@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>面试官提问工具 - 靖化论管理咨询</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', SimSun, sans-serif; line-height: 1.6; color: #333; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .btn { padding: 12px 30px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s; font-family: 'Microsoft YaHei', SimSun, sans-serif; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5568d3; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-success:hover { background: #218838; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .btn-info { background: #17a2b8; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .error-message { color: #dc3545; margin-top: 10px; font-size: 14px; }
+        .success-message { color: #28a745; margin-top: 10px; font-size: 14px; }
+
+        /* 激活码界面 */
+        #activationScreen { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .activation-box { background: white; padding: 50px; border-radius: 15px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; max-width: 500px; width: 90%; }
+        .activation-box h1 { color: #667eea; margin-bottom: 10px; font-size: 28px; }
+        .activation-box p { color: #666; margin-bottom: 30px; }
+        .activation-box input { width: 100%; padding: 15px; font-size: 18px; border: 2px solid #ddd; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+        .activation-box input:focus { outline: none; border-color: #667eea; }
+        #assessmentScreen { display: none; }
+
+        /* 测评界面 */
+        .header { background: white; padding: 20px; margin-bottom: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header h1 { color: #667eea; margin-bottom: 10px; }
+        .header-info { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 15px; }
+        .header-info input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
+        .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .question-card { background: white; padding: 25px; margin-bottom: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .question-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; }
+        .question-title { font-size: 18px; font-weight: bold; color: #333; flex: 1; }
+        .question-category { background: #667eea; color: white; padding: 5px 15px; border-radius: 20px; font-size: 12px; margin-left: 10px; }
+        .observation-points { background: #e7f3ff; padding: 12px; border-radius: 5px; margin: 15px 0; font-size: 14px; }
+        .answer-section { margin: 15px 0; }
+        .answer-item { padding: 12px; margin: 8px 0; border-radius: 5px; font-size: 14px; }
+        .answer-high { background: #d4edda; border-left: 4px solid #28a745; }
+        .answer-medium { background: #fff3cd; border-left: 4px solid #ffc107; }
+        .answer-low { background: #f8d7da; border-left: 4px solid #dc3545; }
+        .score-section { display: flex; align-items: center; gap: 15px; margin-top: 15px; }
+        .score-section label { font-weight: bold; }
+        .score-input { display: flex; gap: 10px; }
+        .score-btn { width: 40px; height: 40px; border: 2px solid #ddd; background: white; border-radius: 50%; cursor: pointer; font-weight: bold; transition: all 0.3s; }
+        .score-btn:hover { background: #667eea; color: white; border-color: #667eea; }
+        .score-btn.selected { background: #667eea; color: white; border-color: #667eea; }
+        .score-display { font-size: 24px; font-weight: bold; color: #667eea; margin-left: 20px; }
+        .results-section { background: white; padding: 30px; margin: 20px 0; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: none; }
+        .results-section h2 { color: #667eea; margin-bottom: 20px; }
+        .score-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0; }
+        .score-item { text-align: center; padding: 20px; background: #f8f9fa; border-radius: 10px; }
+        .score-item .number { font-size: 48px; font-weight: bold; color: #667eea; }
+        .rating { font-size: 24px; margin: 20px 0; padding: 15px; border-radius: 10px; text-align: center; }
+        .rating-high { background: #d4edda; color: #155724; }
+        .rating-medium { background: #fff3cd; color: #856404; }
+        .rating-low { background: #f8d7da; color: #721c24; }
+        .report-actions { display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap; }
+        .radar-chart { width: 400px; height: 400px; margin: 30px auto; position: relative; }
+        @media print { body { background: white; } .controls, .btn, #activationScreen, #adminPanel { display: none !important; } .question-card, .results-section { box-shadow: none; border: 1px solid #ddd; } .container { max-width: 100%; padding: 0; } }
+        .edit-mode { border: 2px dashed #667eea; padding: 10px; border-radius: 5px; }
+        .edit-textarea { width: 100%; min-height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-family: 'Microsoft YaHei', SimSun, sans-serif; }
+        .dimension-scores { margin: 20px 0; }
+        .dimension-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; }
+        .progress-bar { width: 200px; height: 20px; background: #e0e0e0; border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #667eea; transition: width 0.3s; }
+        .rubric-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13px; }
+        .rubric-table th { background: #667eea; color: white; padding: 10px; text-align: left; font-weight: bold; }
+        .rubric-table td { padding: 10px; border: 1px solid #dee2e6; vertical-align: top; }
+        .rubric-table tr:nth-child(even) { background: #f8f9fa; }
+        .score-5 { background: #d4edda !important; }
+        .score-4 { background: #cce5ff !important; }
+        .score-3 { background: #fff3cd !important; }
+        .score-2 { background: #ffeaa7 !important; }
+        .score-1 { background: #f8d7da !important; }
+        .interview-notes { margin: 15px 0; padding: 15px; background: #fff; border: 2px solid #667eea; border-radius: 8px; }
+        .interview-notes h4 { color: #667eea; margin-bottom: 10px; }
+        .notes-textarea { width: 100%; min-height: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-family: 'Microsoft YaHei', SimSun, sans-serif; font-size: 14px; resize: vertical; }
+        .dimension-analysis { background: white; padding: 25px; margin: 20px 0; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .dimension-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 20px 0; }
+        .dimension-card { padding: 20px; border-radius: 10px; border: 2px solid #e0e0e0; transition: all 0.3s; }
+        .dimension-card:hover { border-color: #667eea; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2); }
+        .dimension-card h4 { color: #667eea; margin-bottom: 10px; }
+        .dimension-score { font-size: 36px; font-weight: bold; color: #667eea; margin: 10px 0; }
+        .report-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; margin-bottom: 30px; text-align: center; }
+        .report-header h1 { font-size: 32px; margin-bottom: 10px; }
+
+        /* 管理面板弹窗 */
+        #adminPanel { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9000; justify-content: center; align-items: center; }
+        .admin-modal { background: #fff; border-radius: 15px; padding: 25px; max-width: 680px; width: 95%; max-height: 88vh; overflow-y: auto; }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #667eea; padding-bottom: 12px; }
+        .admin-header h2 { color: #667eea; font-size: 18px; }
+        .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; }
+        .close-btn:hover { color: #333; }
+        .admin-content h3 { color: #333; margin: 15px 0 8px; font-size: 14px; }
+        .admin-content p { font-size: 13px; color: #666; }
+        .admin-content textarea { width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 12px; font-family: 'Consolas', 'Monaco', monospace; resize: vertical; min-height: 80px; }
+        .tab-btn { padding: 8px 16px; border: none; background: #f5f5f5; border-radius: 6px; cursor: pointer; }
+        .tab-btn.active { background: #667eea; color: #fff; font-weight: bold; }
+
+        /* 答题进度 */
+        .progress-section { background: #fff; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); }
+        .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .progress-header h3 { color: #667eea; font-size: 18px; }
+        .progress-header .count { font-size: 24px; font-weight: bold; color: #667eea; }
+        .progress-bar { height: 12px; background: #e0e0e0; border-radius: 6px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); border-radius: 6px; transition: width 0.5s ease; }
+        .progress-tip { font-size: 14px; color: #666; margin-top: 10px; text-align: center; }
+
+        /* 雷达图区域 */
+        .radar-section { background: #fff; border-radius: 15px; padding: 25px; margin-bottom: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); }
+        .radar-section h2 { color: #667eea; margin-bottom: 20px; font-size: 20px; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
+        .radar-container { display: flex; flex-wrap: wrap; gap: 30px; align-items: center; justify-content: center; }
+        #radarChart { max-width: 100%; width: 400px; }
+        .dimension-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; flex: 1; min-width: 280px; }
+        .dim-card { padding: 15px; border-radius: 10px; border: 2px solid #e0e0e0; transition: all 0.3s; }
+        .dim-card:hover { border-color: #667eea; transform: translateY(-3px); }
+        .dim-card.excellent { background: #e8f5e9; border-color: #4caf50; }
+        .dim-card.good { background: #e3f2fd; border-color: #2196f3; }
+        .dim-card.average { background: #fff8e1; border-color: #ff9800; }
+        .dim-card.poor { background: #ffebee; border-color: #f44336; }
+        .dim-card h4 { font-size: 14px; color: #333; margin-bottom: 8px; }
+        .dim-card .score { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
+        .dim-card.excellent .score { color: #4caf50; }
+        .dim-card.good .score { color: #2196f3; }
+        .dim-card.average .score { color: #ff9800; }
+        .dim-card.poor .score { color: #f44336; }
+        .dim-card .grade { font-size: 12px; padding: 3px 10px; border-radius: 10px; display: inline-block; margin-bottom: 8px; }
+        .dim-card.excellent .grade { background: #4caf50; color: #fff; }
+        .dim-card.good .grade { background: #2196f3; color: #fff; }
+        .dim-card.average .grade { background: #ff9800; color: #fff; }
+        .dim-card.poor .grade { background: #f44336; color: #fff; }
+        .dim-card .suggestion { font-size: 12px; color: #666; line-height: 1.5; }
+
+        /* 综合评级 */
+        .overall-rating { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border-radius: 15px; padding: 30px; margin-bottom: 20px; text-align: center; }
+        .overall-rating h2 { margin-bottom: 15px; font-size: 20px; }
+        .rating-badge { font-size: 32px; font-weight: bold; margin-bottom: 10px; }
+        .rating-desc { font-size: 18px; opacity: 0.9; }
+
+        /* 操作按钮 */
+        .action-buttons { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin: 30px 0; }
+
+        @media (max-width: 768px) { .header-info { flex-direction: column; } .question-header { flex-direction: column; align-items: flex-start; } .question-category { margin-left: 0; margin-top: 10px; } .score-section { flex-direction: column; align-items: flex-start; } .radar-chart { width: 100%; height: auto; } .dimension-cards { width: 100%; min-width: unset; } .rating-badge { font-size: 24px; } }
+    </style>
+</head>
+<body>
+    <!-- 激活码输入界面 -->
+    <div id="activationScreen">
+        <div class="activation-box">
+            <h1>面试官提问工具</h1>
+            <p>靖化论管理咨询 - 专业面试测评系统</p>
+            <input type="text" id="activationCode" placeholder="请输入激活码" />
+            <button class="btn btn-primary" id="activateBtn">激活</button>
+            <div id="activationMessage"></div>
+        </div>
+    </div>
+
+    <!-- 测评界面 -->
+    <div id="assessmentScreen">
+        <div class="container">
+            <div class="report-header">
+                <h1>面试官提问工具</h1>
+                <p>靖化论管理咨询 - 专业面试测评系统</p>
+                <p style="font-size: 14px; margin-top: 10px;">科学 · 专业 · 实用</p>
+            </div>
+
+            <div class="header">
+                <h1 style="font-size: 24px;">候选人信息</h1>
+                <div class="header-info">
+                    <div>
+                        <label>候选人姓名：</label>
+                        <input type="text" id="candidateName" placeholder="请输入姓名" />
+                    </div>
+                    <div>
+                        <label>应聘岗位：</label>
+                        <select id="position" style="padding:8px 12px;border:1px solid #ddd;border-radius:5px;font-size:14px;">
+                            <option value="销售岗位">销售岗位</option>
+                            <option value="管理岗位">管理岗位</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>面试日期：</label>
+                        <input type="date" id="interviewDate" />
+                    </div>
+                    <div>
+                        <label>面试官姓名：</label>
+                        <input type="text" id="interviewerName" placeholder="请输入面试官姓名" />
+                    </div>
+                    <div>
+                        <label>面试官职位：</label>
+                        <input type="text" id="interviewerPosition" placeholder="如：HR经理/销售总监" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="btn btn-primary" id="copyDataBtn">复制数据到剪贴板</button>
+                <button class="btn btn-secondary" id="historyBtn" onclick="showReportHistory()">📋 历史报告</button>
+                <button class="btn btn-info" id="showSettingsBtn">⚙️ 设置</button>
+            </div>
+
+            <!-- 管理面板弹窗 -->
+            <div id="adminPanel">
+                <div class="admin-modal">
+                    <div class="admin-header">
+                        <h2>管理设置</h2>
+                        <button class="close-btn" id="closeAdminBtn">&times;</button>
+                    </div>
+                    <div class="admin-content">
+                        <!-- 密码验证区域 -->
+                        <div id="passwordSection" style="padding:20px;">
+                            <h3 style="font-size:14px;margin-bottom:12px;">请输入管理密码</h3>
+                            <input type="password" id="adminPassword" placeholder="管理密码" style="width:100%;padding:10px 12px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;margin-bottom:15px;">
+                            <button class="btn btn-primary" id="verifyAdminBtn" style="width:100%;padding:8px;font-size:13px;">验证</button>
+                            <p style="font-size:15px;color:#666;margin-top:15px;padding-top:12px;border-top:1px dashed #e0e0e0;text-align:center;">
+                                <strong>如需定制开发岗位或技术支持</strong><br>
+                                <span style="font-size:13px;color:#999;">联系靖化论系统管理员：📞 13067243944</span>
+                            </p>
+                        </div>
+                        <!-- 验证后的管理内容 -->
+                        <div id="adminContent" style="display:none;">
+                            <!-- Tab导航 -->
+                            <div style="display:flex;gap:10px;margin-bottom:20px;border-bottom:2px solid #e0e0e0;padding-bottom:10px;">
+                                <button class="tab-btn active" id="tabBtnPosition" data-tab="position">岗位配置</button>
+                                <button class="tab-btn" id="tabBtnQuestions" data-tab="questions">题目管理</button>
+                            </div>
+                            
+                            <!-- 岗位配置Tab -->
+                            <div id="tabPosition" style="display:none;">
+                                <h3>岗位配置列表</h3>
+                                <div id="positionList"></div>
+                                <div id="positionEditor" style="display:none;margin-top:20px;padding:20px;background:#f9f9f9;border-radius:10px;">
+                                    <h4 id="positionEditorTitle">编辑岗位配置</h4>
+                                    <input type="hidden" id="editPositionKey">
+                                    <div style="margin-bottom:15px;">
+                                        <label style="display:block;margin-bottom:5px;font-weight:bold;">岗位名称</label>
+                                        <input type="text" id="editPositionName" style="width:100%;padding:10px;border:2px solid #e0e0e0;border-radius:8px;">
+                                    </div>
+                                    <div style="margin-bottom:15px;">
+                                        <label style="display:block;margin-bottom:10px;font-weight:bold;">维度权重配置（总和需=100%）</label>
+                                        <div id="weightInputs"></div>
+                                        <p id="weightTotal" style="margin-top:8px;font-size:13px;color:#666;">当前权重总和：<span style="color:#667eea;font-weight:bold;">100%</span></p>
+                                    </div>
+                                    <div style="margin-bottom:15px;">
+                                        <label style="display:block;margin-bottom:5px;font-weight:bold;">核心维度（该维度分数对评级影响最大）</label>
+                                        <select id="editCoreDim" style="width:100%;padding:10px;border:2px solid #e0e0e0;border-radius:8px;">
+                                            <option value="1">通用能力</option>
+                                            <option value="2">销售专业</option>
+                                            <option value="3">情景模拟</option>
+                                            <option value="4">性格/动机</option>
+                                        </select>
+                                    </div>
+                                    <div style="margin-bottom:15px;">
+                                        <label style="display:block;margin-bottom:10px;font-weight:bold;">评级规则</label>
+                                        <div id="ratingRulesEditor"></div>
+                                    </div>
+                                    <div style="display:flex;gap:10px;margin-top:20px;">
+                                        <button class="btn btn-primary" onclick="savePositionConfig()">保存配置</button>
+                                        <button class="btn btn-secondary" onclick="cancelPositionEdit()">取消</button>
+                                        <button class="btn btn-danger" id="deletePositionBtn" onclick="deletePositionConfig()" style="margin-left:auto;">删除岗位</button>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" onclick="addNewPosition()" style="margin-top:15px;">+ 新增岗位</button>
+                            </div>
+                            
+                            <!-- 题目管理Tab -->
+                            <div id="tabQuestions" style="display:none;">
+                                <h3>编辑题目（JSON格式）</h3>
+                                <p style="font-size:13px;color:#666;margin-bottom:10px;">修改后可调整题目内容、评分标准等：</p>
+                                
+                                <!-- 岗位选择 -->
+                                <div style="margin-bottom:10px;">
+                                    <select id="questionEditPosition" style="padding:8px 12px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;min-width:150px;">
+                                        <option value="销售">销售岗位</option>
+                                        <option value="管理">管理岗位</option>
+                                    </select>
+                                    <span style="font-size:12px;color:#999;margin-left:10px;">← 选择要编辑的岗位题目</span>
+                                </div>
+                                
+                                <textarea id="questionsEditor" style="width:100%;height:280px;padding:12px;border:2px solid #e0e0e0;border-radius:8px;font-size:12px;font-family:'Consolas','Monaco',monospace;margin-bottom:10px;"></textarea>
+                                <div style="display:flex;gap:10px;">
+                                    <button class="btn btn-primary" id="saveQuestionsBtn">保存题目</button>
+                                    <button class="btn btn-secondary" id="resetQuestionsBtn2">重置为默认题目</button>
+                                </div>
+                            </div>
+                            
+                            <!-- 页脚信息 -->
+                            <div style="margin-top:25px;padding-top:15px;border-top:1px dashed #e0e0e0;">
+                                <div style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:15px;">
+                                    <h4 style="font-size:13px;color:#667eea;margin-bottom:10px;">📋 管理功能说明</h4>
+                                    <ul style="font-size:12px;color:#666;margin:0;padding-left:18px;line-height:1.8;">
+                                        <li><strong>岗位配置：</strong>根据不同岗位调整评分权重和录用标准</li>
+                                        <li><strong>题目管理：</strong>根据公司需求个性化调整面试题目和评分标准</li>
+                                    </ul>
+                                </div>
+                                <div style="text-align:center;color:#666;">
+                                    <p style="margin:0 0 5px;font-size:14px;"><strong>如需定制开发岗位或技术支持</strong></p>
+                                    <p style="margin:0;font-size:12px;color:#999;"><strong>联系靖化论系统管理员：</strong>📞 13067243944</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 历史报告弹窗 -->
+            <div id="historyPanel" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9000;justify-content:center;align-items:center;">
+                <div style="background:#fff;border-radius:15px;padding:25px;max-width:600px;width:95%;max-height:80vh;overflow-y:auto;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:2px solid #667eea;padding-bottom:12px;">
+                        <h2 style="color:#667eea;margin:0;font-size:18px;">📋 历史报告</h2>
+                        <button onclick="hideReportHistory()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999;">&times;</button>
+                    </div>
+                    <div id="historyList"></div>
+                </div>
+            </div>
+
+            <div id="scoringGuide" class="question-card" style="background: linear-gradient(135deg, #667eea10, #764ba210); border: 2px solid #667eea;">
+                <h3 style="color: #667eea; margin-bottom: 15px;">📋 评分标准（适用于所有题目）</h3>
+                <table class="rubric-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 80px;">分数</th>
+                            <th style="width: 150px;">等级</th>
+                            <th>评判标准</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="score-5"><td><strong>5分</strong></td><td>⭐ 优秀</td><td>回答非常出色，展现卓越能力和素质，超出岗位预期</td></tr>
+                        <tr class="score-4"><td><strong>4分</strong></td><td>✅ 良好</td><td>回答较好，满足岗位核心要求，符合预期</td></tr>
+                        <tr class="score-3"><td><strong>3分</strong></td><td>➖ 一般</td><td>回答一般，部分符合要求，需进一步考察</td></tr>
+                        <tr class="score-2"><td><strong>2分</strong></td><td>⚠️ 较差</td><td>回答较差，多项要求不符，明显短板</td></tr>
+                        <tr class="score-1"><td><strong>1分</strong></td><td>❌ 很差</td><td>回答很差，完全不符合要求，严重偏离</td></tr>
+                    </tbody>
+                </table>
+                <p style="margin-top: 10px; font-size: 13px; color: #666;">💡 每题下方有"高分/一般/警惕"三类回答特征作为具体参照，请结合评分标准和回答特征综合打分。</p>
+            </div>
+
+            <div id="questionsContainer"></div>
+
+            <!-- 答题进度 -->
+            <div class="progress-section" id="progressSection" style="display:none;">
+                <div class="progress-header">
+                    <h3>答题进度</h3>
+                    <span class="count"><span id="answeredCount">0</span> / 16</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+                <p class="progress-tip" id="progressTip">请完成所有题目评分后查看结果</p>
+            </div>
+
+            <div class="results-section" id="resultsSection" style="display:none;">
+                <!-- 四维度能力分析 -->
+                <div class="radar-section">
+                    <h2>四维度能力分析</h2>
+                    <div class="radar-container">
+                        <div style="width:100%;max-width:400px;margin:0 auto;text-align:center;">
+                            <canvas id="radarChart" width="400" height="400" style="max-width:100%;height:auto;"></canvas>
+                        </div>
+                        <div class="dimension-cards">
+                            <div class="dim-card" id="dim1Card">
+                                <h4>通用能力</h4>
+                                <div class="score" id="dim1Score">0.0</div>
+                                <span class="grade" id="dim1Grade">--</span>
+                                <p class="suggestion">包括表达逻辑、自我认知、抗压能力、时间管理等基础能力</p>
+                            </div>
+                            <div class="dim-card" id="dim2Card">
+                                <h4>销售专业</h4>
+                                <div class="score" id="dim2Score">0.0</div>
+                                <span class="grade" id="dim2Grade">--</span>
+                                <p class="suggestion">包括实战能力、成交技巧、获客方法、客户管理等销售核心能力</p>
+                            </div>
+                            <div class="dim-card" id="dim3Card">
+                                <h4>情景模拟</h4>
+                                <div class="score" id="dim3Score">0.0</div>
+                                <span class="grade" id="dim3Grade">--</span>
+                                <p class="suggestion">包括应变能力、责任心、谈判能力、抗挫能力等情境应对能力</p>
+                            </div>
+                            <div class="dim-card" id="dim4Card">
+                                <h4>性格/动机</h4>
+                                <div class="score" id="dim4Score">0.0</div>
+                                <span class="grade" id="dim4Grade">--</span>
+                                <p class="suggestion">包括上进心、稳定性、价值观匹配、职业动机等内在特质</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 综合评级 -->
+                <div class="overall-rating">
+                    <h2>综合评级</h2>
+                    <div class="rating-badge" id="overallBadge">--</div>
+                    <div class="rating-desc" id="overallDesc">--</div>
+                    <div class="avg-score" id="overallAvg" style="margin-top:10px;font-size:16px;color:#666;">综合评分：--</div>
+                    <div class="rating-disclaimer" style="margin-top:15px;font-size:12px;color:rgba(255,255,255,0.7);">* 本评分仅反映面试表现，录用决策应结合学历、背景调查、团队匹配度等因素综合考量</div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="action-buttons">
+                    <button class="btn btn-success" id="exportReportBtn">生成完整报告</button>
+                </div>
+
+                <!-- 定制推广卡片 -->
+                <div style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-radius:15px;padding:25px 30px;margin:20px 0;text-align:center;">
+                    <div style="font-size:32px;margin-bottom:10px;">🎯</div>
+                    <h3 style="font-size:18px;margin-bottom:8px;font-weight:bold;">需要更多岗位的面试题库？</h3>
+                    <p style="font-size:14px;opacity:0.9;margin-bottom:15px;line-height:1.6;">技术 · 客服 · 行政 · 财务 · 运营等岗位均可定制</p>
+                    <div style="background:rgba(255,255,255,0.2);padding:10px 25px;border-radius:20px;display:inline-block;margin-bottom:12px;">
+                        <span style="font-size:14px;opacity:0.9;margin-right:5px;">限时</span>
+                        <span style="font-size:22px;font-weight:bold;">99元起</span>
+                        <span style="font-size:13px;opacity:0.9;"> / 岗位</span>
+                    </div>
+                    <p style="font-size:13px;opacity:0.8;margin-bottom:5px;">添加微信，快速定制专属题库</p>
+                    <p style="font-size:16px;font-weight:bold;">📞 13067243944</p>
+                </div>
+            </div>
+
+            <!-- 底部生成报告按钮 -->
+            <div id="generateReportSection" style="text-align: center; margin: 30px 0; padding: 30px; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <button class="btn btn-success" id="generateReportBtn" style="font-size: 20px; padding: 15px 60px; border-radius: 10px;">生成报告</button>
+                <p style="margin-top: 10px; color: #999; font-size: 13px;">完成所有题目评分后，点击生成完整测评报告</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ 全局变量 ============
+        var memoryUsageRecords = {};
+        var isEditMode = false;
+        var questions = [];
+
+        // 内置激活码
+        var BUILT_IN_CODE_LIST = [
+            { code: "依靖销售001", maxUses: 5 },
+            { code: "依靖销售002", maxUses: 5 },
+            { code: "依靖销售003", maxUses: 10 },
+            { code: "依靖销售DEMO", maxUses: 100 },
+            { code: "yijing2026test", maxUses: 999 }
+        ];
+
+        // 题目数据
+        var salesQuestions = [
+            { id: 1, category: "通用能力", title: "请用3分钟介绍一下你自己。", observationPoints: "表达逻辑性、条理清晰度、重点突出程度、自我认知准确度", highAnswer: "回答结构清晰（如：背景-经验-优势-职业目标），能突出与销售相关的能力和成就，时间控制精准，表达自信流畅。", mediumAnswer: "能介绍基本背景和经验，但逻辑不够清晰，重点不够突出，或时间控制不够准确。", lowAnswer: "表达混乱、无重点、过于冗长或简短，回避关键问题，或内容与销售岗位无关。", score: 0 },
+            { id: 2, category: "通用能力", title: "你为什么选择销售这个职业？", observationPoints: "职业动机、价值观匹配、对销售工作的理解、长期意愿", highAnswer: "能清晰表达对销售工作的理解和热情，动机积极（如：喜欢与人打交道、有成就感、挑战性强），与公司价值观匹配。", mediumAnswer: "动机一般（如：收入高、容易入门），对销售工作理解较浅，或表达不够真诚。", lowAnswer: "动机消极（如：没办法、临时过渡），对销售有误解，或明显不感兴趣。", score: 0 },
+            { id: 3, category: "通用能力", title: "描述一次你克服困难的经历。", observationPoints: "抗压能力、问题解决思路、坚持不懈的精神、复盘总结能力", highAnswer: "能详细描述具体困难情境，展现清晰的问题解决思路，体现坚持不懈和积极态度，并有复盘总结。", mediumAnswer: "能描述困难经历，但问题解决思路不够清晰，或缺乏坚持，或没有复盘总结。", lowAnswer: "无法描述具体经历，或轻易放弃，或归咎外部因素，无反思精神。", score: 0 },
+            { id: 4, category: "通用能力", title: "你的优势和劣势分别是什么？", observationPoints: "自我认知准确度、诚实度、对自身不足的态度、改进意识", highAnswer: "优势描述具体且与销售相关（如：沟通能力强、抗压能力强），劣势真实且不影响销售工作，并有改进计划。", mediumAnswer: "优势描述较泛，劣势描述不够真实，或改进计划不明确。", lowAnswer: "自我认知偏差大，或回避劣势，或对劣势无改进意识，或不诚实。", score: 0 },
+            { id: 5, category: "通用能力", title: "你如何安排一天的工作时间？", observationPoints: "时间管理能力、优先级判断、计划性、执行力", highAnswer: "能清晰说明时间管理方法和工具，优先级判断准确（如：重要紧急四象限），有计划性和执行力。", mediumAnswer: "有时间管理意识，但方法不够系统，优先级判断一般，或计划性不强。", lowAnswer: "无时间管理概念，工作随意性强，或无法说明具体安排方法。", score: 0 },
+            { id: 6, category: "销售专业", title: "你曾经完成过最有挑战的一笔订单是什么样的？", observationPoints: "实战能力、成交技巧、客户洞察、谈判能力", highAnswer: "能详细描述订单背景、挑战点、应对策略、最终成果，展现优秀的销售技巧和客户洞察力。", mediumAnswer: "能描述订单情况，但挑战点不够突出，应对策略一般，或成果不够显著。", lowAnswer: "无法描述具体订单，或订单无挑战性，或无法说明成交关键。", score: 0 },
+            { id: 7, category: "销售专业", title: "如果客户说'我不需要'，你会怎么应对？", observationPoints: "抗压能力、话术技巧、应变能力、客户导向", highAnswer: "能保持冷静和专业，通过提问了解客户真实需求和顾虑，灵活调整话术，展现较强的应变能力。", mediumAnswer: "能应对但话术较生硬，或应变不够灵活，或容易放弃。", lowAnswer: "情绪化反应（如：生气、沮丧），或强行推销，或立即放弃。", score: 0 },
+            { id: 8, category: "销售专业", title: "你如何开发新客户？", observationPoints: "获客方法、主动出击能力、渠道拓展、客户洞察", highAnswer: "能说明多种获客渠道和方法（如：电话拜访、网络营销、转介绍），有系统性的开发策略，主动性强。", mediumAnswer: "有基本获客方法，但渠道较单一，或策略不够系统，主动性一般。", lowAnswer: "无明确获客方法，被动等待客户上门，或方法无效。", score: 0 },
+            { id: 9, category: "销售专业", title: "你平时用哪些工具管理客户信息？", observationPoints: "工具使用能力、客户管理意识、数据化思维、跟进系统性", highAnswer: "能熟练使用CRM系统或客户管理工具，有系统化的客户信息管理和跟进流程，数据化思维强。", mediumAnswer: "使用简单的客户管理工具（如：Excel、笔记本），但管理不够系统化。", lowAnswer: "无客户管理工具，或管理混乱，无跟进记录。", score: 0 },
+            { id: 10, category: "销售专业", title: "描述一次你输给竞争对手的经历，你从中学到了什么？", observationPoints: "复盘能力、成长思维、竞争意识、改进措施", highAnswer: "能客观分析失败原因，总结关键教训，并有具体的改进措施，展现成长思维。", mediumAnswer: "能分析失败原因，但总结不够深刻，或改进措施不明确。", lowAnswer: "无法客观分析，归咎外部因素，或无反思和改进行动。", score: 0 },
+            { id: 11, category: "情景模拟", title: "情景：你约好了客户见面，但堵车预计迟到15分钟，你怎么做？", observationPoints: "应变能力、责任心、沟通技巧、客户尊重", highAnswer: "立即通知客户并诚恳道歉，说明原因和预计到达时间，提出补救方案（如：调整议程、改期），展现高度责任心。", mediumAnswer: "会通知客户但沟通不够及时或诚恳，或补救方案不够完善。", lowAnswer: "不通知客户，或迟到后无合理解释和道歉，或态度敷衍。", score: 0 },
+            { id: 12, category: "情景模拟", title: "情景：你的产品比竞争对手贵20%，客户质疑价格，你如何回应？", observationPoints: "价值传递能力、谈判技巧、产品知识、说服力", highAnswer: "能清晰阐述产品独特价值和ROI，用数据或案例证明性价比，灵活应对客户异议，展现较强说服力。", mediumAnswer: "能说明产品优势，但价值传递不够有力，或应对异议技巧一般。", lowAnswer: "无法有效传递价值，或轻易降价，或无法回应客户质疑。", score: 0 },
+            { id: 13, category: "情景模拟", title: "情景：你跟进3个月的客户，突然说选了别家，你怎么做？", observationPoints: "抗挫能力、复盘意识、关系维护、职业素养", highAnswer: "保持专业和冷静，礼貌询问失败原因并感谢机会，维护长期关系，同时复盘总结改进。", mediumAnswer: "能保持专业但情绪受影响，或复盘不够深入，或关系维护不够。", lowAnswer: "情绪化反应（如：抱怨、指责），或放弃关系维护，或无复盘意识。", score: 0 },
+            { id: 14, category: "性格/动机", title: "你对自己未来3年的职业规划是什么？", observationPoints: "上进心、目标清晰度、稳定性、与岗位匹配度", highAnswer: "有清晰可行的职业规划，目标与销售岗位发展路径匹配，展现上进心和稳定性。", mediumAnswer: "有规划但不够清晰或可行，或与岗位匹配度一般。", lowAnswer: "无明确规划，或规划与岗位不符，或缺乏上进心。", score: 0 },
+            { id: 15, category: "性格/动机", title: "你最能接受的高压工作状态是什么样的？", observationPoints: "抗压匹配度、工作偏好、自我认知、适应性", highAnswer: "能准确描述可接受的高压场景（如：业绩目标、客户拒绝），并说明应对方法，与销售岗位要求匹配。", mediumAnswer: "能描述但不够具体，或应对方法不够有效，或匹配度一般。", lowAnswer: "无法描述，或完全不接受高压，或与岗位要求严重不符。", score: 0 },
+            { id: 16, category: "性格/动机", title: "你希望通过这份工作获得什么？", observationPoints: "动机纯正度、与薪酬期望的匹配、价值观、长期意愿", highAnswer: "动机积极且全面（如：成长、成就、收入、团队），与薪酬期望合理匹配，价值观正向。", mediumAnswer: "动机较单一（如：只看收入），或期望不够合理，或价值观一般。", lowAnswer: "动机消极或不纯（如：混日子），或期望严重不匹配，或价值观偏差。", score: 0 }
+        ];
+
+        var managementQuestions = [
+            { id: 1, category: "通用能力", title: "请用3分钟介绍一下你自己。", observationPoints: "表达逻辑性、条理清晰度、重点突出程度、自我认知准确度", highAnswer: "回答结构清晰（如：背景-经验-优势-职业目标），能突出与管理相关的能力和成就，时间控制精准，表达自信流畅。", mediumAnswer: "能介绍基本背景和经验，但逻辑不够清晰，重点不够突出，或时间控制不够准确。", lowAnswer: "表达混乱、无重点、过于冗长或简短，回避关键问题，或内容与管理岗位无关。", score: 0 },
+            { id: 2, category: "通用能力", title: "你为什么选择管理这个职业方向？", observationPoints: "职业动机、价值观匹配、对管理工作的理解、长期意愿", highAnswer: "能清晰表达对管理工作的理解和热情，动机积极（如：喜欢培养人、有成就感、挑战性强），与公司价值观匹配。", mediumAnswer: "动机一般（如：晋升、收入），对管理工作理解较浅，或表达不够真诚。", lowAnswer: "动机消极（如：管人威风、不用做事），对管理有误解，或明显不感兴趣。", score: 0 },
+            { id: 3, category: "通用能力", title: "描述一次你带领团队克服困难的经历。", observationPoints: "抗压能力、问题解决思路、团队凝聚力、复盘总结能力", highAnswer: "能详细描述具体困难情境，展现清晰的问题解决思路，体现团队凝聚力和积极态度，并有复盘总结。", mediumAnswer: "能描述困难经历，但问题解决思路不够清晰，或缺乏团队凝聚力，或没有复盘总结。", lowAnswer: "无法描述具体经历，或轻易放弃，或归咎外部因素，无反思精神。", score: 0 },
+            { id: 4, category: "通用能力", title: "你的管理优势和劣势分别是什么？", observationPoints: "自我认知准确度、诚实度、对自身不足的态度、改进意识", highAnswer: "优势描述具体且与管理相关（如：沟通能力强、决策果断），劣势真实且不影响管理工作，并有改进计划。", mediumAnswer: "优势描述较泛，劣势描述不够真实，或改进计划不明确。", lowAnswer: "自我认知偏差大，或回避劣势，或对劣势无改进意识，或不诚实。", score: 0 },
+            { id: 5, category: "通用能力", title: "你如何安排一天的管理工作？", observationPoints: "时间管理能力、优先级判断、计划性、执行力", highAnswer: "能清晰说明时间管理方法和工具，优先级判断准确（如：重要紧急四象限），有计划性和执行力。", mediumAnswer: "有时间管理意识，但方法不够系统，优先级判断一般，或计划性不强。", lowAnswer: "无时间管理概念，工作随意性强，或无法说明具体安排方法。", score: 0 },
+            { id: 6, category: "管理专业", title: "你是如何搭建和培养团队的？请举例说明。", observationPoints: "团队建设、人才梯队、人才培养、识人用人", highAnswer: "能说明团队搭建的系统方法，有成功培养下属的案例，关注人才梯队建设。", mediumAnswer: "有团队建设意识但方法不够系统，或缺乏成功案例。", lowAnswer: "无团队建设概念，人员管理靠自然流动。", score: 0 },
+            { id: 7, category: "管理专业", title: "你如何做绩效管理？绩效结果如何应用？", observationPoints: "绩效管理、目标设定、反馈辅导、结果应用", highAnswer: "能说明绩效管理全流程，有目标设定、过程辅导、结果应用的方法和案例。", mediumAnswer: "有绩效管理经验但流程不够完整，或结果应用单一。", lowAnswer: "绩效管理流于形式，或只考核不辅导，或无法说明结果应用。", score: 0 },
+            { id: 8, category: "管理专业", title: "如何处理'管太细'和'管太松'之间的平衡？", observationPoints: "授权艺术、信任建立、过程监督、管理风格", highAnswer: "能说明授权的原则和方法，有建立团队信任的策略，既能放手又能把控关键节点。", mediumAnswer: "有授权意识但方法不够灵活，或对信任建立理解不够深刻。", lowAnswer: "非紧即松，或无法说明具体授权方法。", score: 0 },
+            { id: 9, category: "管理专业", title: "你是如何辅导和激励下属的？请举例。", observationPoints: "辅导方法、激励机制、个性化管理、员工成长", highAnswer: "能说明针对不同员工的不同辅导和激励方法，有帮助员工成长的成功案例。", mediumAnswer: "有辅导激励意识但方法较单一，或案例不够具体。", lowAnswer: "辅导激励靠自然发生，无法说明具体方法。", score: 0 },
+            { id: 10, category: "管理专业", title: "团队业绩输给竞争对手时，你作为管理者做了什么？", observationPoints: "复盘反思、团队调整、竞争力提升、韧性", highAnswer: "能客观分析失败原因，带领团队复盘调整，制定提升竞争力的行动计划。", mediumAnswer: "能复盘但不够深入，或调整措施不够具体。", lowAnswer: "归咎外部因素，或无反思调整，或团队士气不管。", score: 0 },
+            { id: 11, category: "情景模拟", title: "情景：团队核心骨干提出离职，你如何应对？", observationPoints: "人才保留、沟通谈判、风险意识、继任计划", highAnswer: "先冷静沟通了解真实原因，尝试针对性挽留，同步启动继任和知识传承计划。", mediumAnswer: "会沟通挽留但缺乏系统应对，或继任意识不足。", lowAnswer: "情绪化反应，或放弃挽留，或无任何应对措施。", score: 0 },
+            { id: 12, category: "情景模拟", title: "情景：团队士气低落、抱怨增多，你如何处理？", observationPoints: "团队氛围、员工关怀、问题诊断、领导力", highAnswer: "主动调研了解原因，诊断核心问题，采取针对性措施提升士气，有后续跟进。", mediumAnswer: "会关注但诊断不够准确，或措施不够有效。", lowAnswer: "忽视问题，或简单开会打鸡血，或归咎员工态度。", score: 0 },
+            { id: 13, category: "情景模拟", title: "情景：两个部门因资源争抢产生冲突，你作为管理者怎么处理？", observationPoints: "跨部门协作、冲突调解、沟通能力、格局视野", highAnswer: "先分别沟通了解立场，以公司和团队利益为导向，促成双方共识，建立长期协作机制。", mediumAnswer: "能调解但方法不够灵活，或只能短期平息无法建立机制。", lowAnswer: "偏袒一方，或推给上级，或激化矛盾。", score: 0 },
+            { id: 14, category: "性格/动机", title: "你对自己未来3年的管理发展有什么规划？", observationPoints: "管理成长、管理野心、目标清晰度、可行性", highAnswer: "有清晰的进阶路径和目标，对管理能力提升有具体计划，与公司发展匹配。", mediumAnswer: "有规划但不够清晰或可行。", lowAnswer: "无管理规划，或规划与管理无关。", score: 0 },
+            { id: 15, category: "性格/动机", title: "管理工作压力大时，你通常如何调节？", observationPoints: "抗压方式、自我调节、榜样作用、身心健康", highAnswer: "有健康的压力调节方式，既能自我调节又能为团队做示范，不把负面情绪传递给团队。", mediumAnswer: "有调节意识但方式不够健康，或缺乏团队示范意识。", lowAnswer: "无法说明调节方式，或自我调节能力差。", score: 0 },
+            { id: 16, category: "性格/动机", title: "你希望通过管理岗位实现什么？", observationPoints: "管理动机、价值创造、成长诉求、团队贡献", highAnswer: "动机积极全面（如：培养人、拿结果、影响组织），有成就导向和团队贡献意识。", mediumAnswer: "动机较单一（如：晋升、收入），或缺乏团队贡献意识。", lowAnswer: "动机消极（如：管人威风、不用做事），或只关注个人利益。", score: 0 }
+        ];
+
+        // 题库映射
+        var questionBank = {
+            '销售': salesQuestions,
+            '管理': managementQuestions
+        };
+
+        var defaultQuestions = [
+            { id: 1, category: "通用能力", title: "请用3分钟介绍一下你自己。", observationPoints: "表达逻辑性、条理清晰度、重点突出程度、自我认知准确度", highAnswer: "回答结构清晰（如：背景-经验-优势-职业目标），能突出与销售相关的能力和成就，时间控制精准，表达自信流畅。", mediumAnswer: "能介绍基本背景和经验，但逻辑不够清晰，重点不够突出，或时间控制不够准确。", lowAnswer: "表达混乱、无重点、过于冗长或简短，回避关键问题，或内容与销售岗位无关。", score: 0 },
+            { id: 2, category: "通用能力", title: "你为什么选择销售这个职业？", observationPoints: "职业动机、价值观匹配、对销售工作的理解、长期意愿", highAnswer: "能清晰表达对销售工作的理解和热情，动机积极（如：喜欢与人打交道、有成就感、挑战性强），与公司价值观匹配。", mediumAnswer: "动机一般（如：收入高、容易入门），对销售工作理解较浅，或表达不够真诚。", lowAnswer: "动机消极（如：没办法、临时过渡），对销售有误解，或明显不感兴趣。", score: 0 },
+            { id: 3, category: "通用能力", title: "描述一次你克服困难的经历。", observationPoints: "抗压能力、问题解决思路、坚持不懈的精神、复盘总结能力", highAnswer: "能详细描述具体困难情境，展现清晰的问题解决思路，体现坚持不懈和积极态度，并有复盘总结。", mediumAnswer: "能描述困难经历，但问题解决思路不够清晰，或缺乏坚持，或没有复盘总结。", lowAnswer: "无法描述具体经历，或轻易放弃，或归咎外部因素，无反思精神。", score: 0 },
+            { id: 4, category: "通用能力", title: "你的优势和劣势分别是什么？", observationPoints: "自我认知准确度、诚实度、对自身不足的态度、改进意识", highAnswer: "优势描述具体且与销售相关（如：沟通能力强、抗压能力强），劣势真实且不影响销售工作，并有改进计划。", mediumAnswer: "优势描述较泛，劣势描述不够真实，或改进计划不明确。", lowAnswer: "自我认知偏差大，或回避劣势，或对劣势无改进意识，或不诚实。", score: 0 },
+            { id: 5, category: "通用能力", title: "你如何安排一天的工作时间？", observationPoints: "时间管理能力、优先级判断、计划性、执行力", highAnswer: "能清晰说明时间管理方法和工具，优先级判断准确（如：重要紧急四象限），有计划性和执行力。", mediumAnswer: "有时间管理意识，但方法不够系统，优先级判断一般，或计划性不强。", lowAnswer: "无时间管理概念，工作随意性强，或无法说明具体安排方法。", score: 0 },
+            { id: 6, category: "销售专业", title: "你曾经完成过最有挑战的一笔订单是什么样的？", observationPoints: "实战能力、成交技巧、客户洞察、谈判能力", highAnswer: "能详细描述订单背景、挑战点、应对策略、最终成果，展现优秀的销售技巧和客户洞察力。", mediumAnswer: "能描述订单情况，但挑战点不够突出，应对策略一般，或成果不够显著。", lowAnswer: "无法描述具体订单，或订单无挑战性，或无法说明成交关键。", score: 0 },
+            { id: 7, category: "销售专业", title: "如果客户说'我不需要'，你会怎么应对？", observationPoints: "抗压能力、话术技巧、应变能力、客户导向", highAnswer: "能保持冷静和专业，通过提问了解客户真实需求和顾虑，灵活调整话术，展现较强的应变能力。", mediumAnswer: "能应对但话术较生硬，或应变不够灵活，或容易放弃。", lowAnswer: "情绪化反应（如：生气、沮丧），或强行推销，或立即放弃。", score: 0 },
+            { id: 8, category: "销售专业", title: "你如何开发新客户？", observationPoints: "获客方法、主动出击能力、渠道拓展、客户洞察", highAnswer: "能说明多种获客渠道和方法（如：电话拜访、网络营销、转介绍），有系统性的开发策略，主动性强。", mediumAnswer: "有基本获客方法，但渠道较单一，或策略不够系统，主动性一般。", lowAnswer: "无明确获客方法，被动等待客户上门，或方法无效。", score: 0 },
+            { id: 9, category: "销售专业", title: "你平时用哪些工具管理客户信息？", observationPoints: "工具使用能力、客户管理意识、数据化思维、跟进系统性", highAnswer: "能熟练使用CRM系统或客户管理工具，有系统化的客户信息管理和跟进流程，数据化思维强。", mediumAnswer: "使用简单的客户管理工具（如：Excel、笔记本），但管理不够系统化。", lowAnswer: "无客户管理工具，或管理混乱，无跟进记录。", score: 0 },
+            { id: 10, category: "销售专业", title: "描述一次你输给竞争对手的经历，你从中学到了什么？", observationPoints: "复盘能力、成长思维、竞争意识、改进措施", highAnswer: "能客观分析失败原因，总结关键教训，并有具体的改进措施，展现成长思维。", mediumAnswer: "能分析失败原因，但总结不够深刻，或改进措施不明确。", lowAnswer: "无法客观分析，归咎外部因素，或无反思和改进行动。", score: 0 },
+            { id: 11, category: "情景模拟", title: "情景：你约好了客户见面，但堵车预计迟到15分钟，你怎么做？", observationPoints: "应变能力、责任心、沟通技巧、客户尊重", highAnswer: "立即通知客户并诚恳道歉，说明原因和预计到达时间，提出补救方案（如：调整议程、改期），展现高度责任心。", mediumAnswer: "会通知客户但沟通不够及时或诚恳，或补救方案不够完善。", lowAnswer: "不通知客户，或迟到后无合理解释和道歉，或态度敷衍。", score: 0 },
+            { id: 12, category: "情景模拟", title: "情景：你的产品比竞争对手贵20%，客户质疑价格，你如何回应？", observationPoints: "价值传递能力、谈判技巧、产品知识、说服力", highAnswer: "能清晰阐述产品独特价值和ROI，用数据或案例证明性价比，灵活应对客户异议，展现较强说服力。", mediumAnswer: "能说明产品优势，但价值传递不够有力，或应对异议技巧一般。", lowAnswer: "无法有效传递价值，或轻易降价，或无法回应客户质疑。", score: 0 },
+            { id: 13, category: "情景模拟", title: "情景：你跟进3个月的客户，突然说选了别家，你怎么做？", observationPoints: "抗挫能力、复盘意识、关系维护、职业素养", highAnswer: "保持专业和冷静，礼貌询问失败原因并感谢机会，维护长期关系，同时复盘总结改进。", mediumAnswer: "能保持专业但情绪受影响，或复盘不够深入，或关系维护不够。", lowAnswer: "情绪化反应（如：抱怨、指责），或放弃关系维护，或无复盘意识。", score: 0 },
+            { id: 14, category: "性格/动机", title: "你对自己未来3年的职业规划是什么？", observationPoints: "上进心、目标清晰度、稳定性、与岗位匹配度", highAnswer: "有清晰可行的职业规划，目标与销售岗位发展路径匹配，展现上进心和稳定性。", mediumAnswer: "有规划但不够清晰或可行，或与岗位匹配度一般。", lowAnswer: "无明确规划，或规划与岗位不符，或缺乏上进心。", score: 0 },
+            { id: 15, category: "性格/动机", title: "你最能接受的高压工作状态是什么样的？", observationPoints: "抗压匹配度、工作偏好、自我认知、适应性", highAnswer: "能准确描述可接受的高压场景（如：业绩目标、客户拒绝），并说明应对方法，与销售岗位要求匹配。", mediumAnswer: "能描述但不够具体，或应对方法不够有效，或匹配度一般。", lowAnswer: "无法描述，或完全不接受高压，或与岗位要求严重不符。", score: 0 },
+            { id: 16, category: "性格/动机", title: "你希望通过这份工作获得什么？", observationPoints: "动机纯正度、与薪酬期望的匹配、价值观、长期意愿", highAnswer: "动机积极且全面（如：成长、成就、收入、团队），与薪酬期望合理匹配，价值观正向。", mediumAnswer: "动机较单一（如：只看收入），或期望不够合理，或价值观一般。", lowAnswer: "动机消极或不纯（如：混日子），或期望严重不匹配，或价值观偏差。", score: 0 }
+        ];
+
+        // ============ localStorage安全封装 ============
+        function safeLocalStorage(op, key, value) {
+            try {
+                if (op === 'get') return localStorage.getItem(key);
+                if (op === 'set') { localStorage.setItem(key, value); return true; }
+            } catch(e) { console.log('localStorage error:', e); return null; }
+        }
+
+        function getActivationCodes() {
+            try {
+                var stored = safeLocalStorage('get', 'interview_activation_codes');
+                if (stored) {
+                    var parsed = JSON.parse(stored);
+                    if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+                        return parsed;
+                    }
+                }
+            } catch(e) {}
+            var codes = {};
+            BUILT_IN_CODE_LIST.forEach(function(item) { codes[item.code] = { maxUses: item.maxUses }; });
+            return codes;
+        }
+
+        function getUsageRecords() {
+            try {
+                var stored = safeLocalStorage('get', 'activationUsage');
+                if (stored) return JSON.parse(stored);
+            } catch(e) {}
+            return memoryUsageRecords;
+        }
+
+        function saveUsageRecords(records) {
+            memoryUsageRecords = records;
+            safeLocalStorage('set', 'activationUsage', JSON.stringify(records));
+        }
+
+        // ============ 激活码验证 ============
+        function validateActivation() {
+            var inputCode = document.getElementById('activationCode').value.trim();
+            var messageDiv = document.getElementById('activationMessage');
+
+            if (!inputCode) {
+                messageDiv.innerHTML = '<div class="error-message">请输入激活码</div>';
+                return;
+            }
+
+            messageDiv.innerHTML = '<div style="font-size:12px;color:#666;">正在验证...</div>';
+
+            var codes = getActivationCodes();
+            var usageRecords = getUsageRecords();
+
+            var matchedCode = null;
+            var codeInfo = null;
+
+            // 遍历查找匹配
+            for (var i = 0; i < BUILT_IN_CODE_LIST.length; i++) {
+                if (BUILT_IN_CODE_LIST[i].code === inputCode) {
+                    matchedCode = BUILT_IN_CODE_LIST[i].code;
+                    codeInfo = { maxUses: BUILT_IN_CODE_LIST[i].maxUses };
+                    break;
+                }
+            }
+
+            // localStorage的激活码也检查
+            if (!matchedCode && codes[inputCode]) {
+                matchedCode = inputCode;
+                codeInfo = codes[inputCode];
+            }
+
+            if (matchedCode && codeInfo) {
+                var usedCount = usageRecords[matchedCode] || 0;
+
+                if (usedCount >= codeInfo.maxUses) {
+                    messageDiv.innerHTML = '<div class="error-message">该激活码已达到使用次数上限（' + codeInfo.maxUses + '次）</div>';
+                    return;
+                }
+
+                usageRecords[matchedCode] = usedCount + 1;
+                saveUsageRecords(usageRecords);
+
+                var remaining = codeInfo.maxUses - usageRecords[matchedCode];
+                messageDiv.innerHTML = '<div class="success-message">✅ 激活成功！剩余使用次数：' + remaining + '</div>';
+
+                setTimeout(function() {
+                    document.getElementById('activationScreen').style.display = 'none';
+                    document.getElementById('assessmentScreen').style.display = 'block';
+                    initializeAssessment();
+                }, 1000);
+            } else {
+                messageDiv.innerHTML = '<div class="error-message">❌ 激活码无效，请检查输入</div>';
+            }
+        }
+
+        // ============ 初始化测评 ============
+        function initializeAssessment() {
+            var pos = document.getElementById('position').value;
+            var key = pos === '管理岗位' ? '管理' : '销售';
+            questions = JSON.parse(JSON.stringify(questionBank[key]));
+            renderQuestions();
+            document.getElementById('interviewDate').valueAsDate = new Date();
+        }
+
+        // ============ 渲染题目 ============
+        function renderQuestions() {
+            var container = document.getElementById('questionsContainer');
+            container.innerHTML = '';
+            
+            questions.forEach(function(q, index) {
+                var scoreButtons = '';
+                [1,2,3,4,5].forEach(function(score) {
+                    var selectedClass = q.score === score ? 'selected' : '';
+                    scoreButtons += '<button class="score-btn ' + selectedClass + '" data-qid="' + q.id + '" data-score="' + score + '">' + score + '</button>';
+                });
+                
+                var questionHtml = '<div class="question-card" id="question-' + q.id + '">' +
+                    '<div class="question-header">' +
+                        '<div class="question-title">Q' + q.id + '. ' + q.title + '</div>' +
+                        '<div class="question-category">' + q.category + '</div>' +
+                    '</div>' +
+                    '<div class="observation-points"><strong>观察要点：</strong>' + q.observationPoints + '</div>' +
+                    '<div class="answer-section">' +
+                        '<div class="answer-item answer-high"><strong>🌟 高分回答特征（4-5分）：</strong><br/>' + q.highAnswer + '</div>' +
+                        '<div class="answer-item answer-medium"><strong>⚠️ 一般回答特征（2-3分）：</strong><br/>' + q.mediumAnswer + '</div>' +
+                        '<div class="answer-item answer-low"><strong>🚫 需要警惕的回答（1分）：</strong><br/>' + q.lowAnswer + '</div>' +
+                    '</div>' +
+                    '<div class="interview-notes">' +
+                        '<h4>📝 面试观察记录</h4>' +
+                        '<textarea class="notes-textarea" id="notes-' + q.id + '" placeholder="记录候选人的具体回答要点、非语言表达、印象笔记..."></textarea>' +
+                    '</div>' +
+                    '<div class="score-section">' +
+                        '<label>面试官打分：</label>' +
+                        '<div class="score-input" id="score-input-' + q.id + '">' + scoreButtons + '</div>' +
+                        '<div class="score-display" id="score-display-' + q.id + '">' + (q.score > 0 ? q.score + '分' : '未评分') + '</div>' +
+                    '</div>' +
+                '</div>';
+                container.innerHTML += questionHtml;
+            });
+
+            // 绑定评分按钮事件
+            document.querySelectorAll('.score-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var qid = parseInt(this.getAttribute('data-qid'));
+                    var score = parseInt(this.getAttribute('data-score'));
+                    setScore(qid, score);
+                });
+            });
+        }
+
+        // ============ 设置分数 ============
+        function setScore(questionId, score) {
+            questions.forEach(function(q) { 
+                if (q.id === questionId) { q.score = score; } 
+            });
+            
+            var buttons = document.querySelectorAll('#score-input-' + questionId + ' .score-btn');
+            buttons.forEach(function(btn) { 
+                btn.classList.remove('selected'); 
+                if (parseInt(btn.getAttribute('data-score')) === score) { 
+                    btn.classList.add('selected'); 
+                } 
+            });
+            
+            document.getElementById('score-display-' + questionId).textContent = score + '分';
+            calculateResults();
+        }
+
+        // ============ 计算结果 ============
+        function calculateResults() {
+            var totalScore = 0, answeredCount = 0, dimensionScores = {};
+            questions.forEach(function(q) {
+                if (q.score > 0) { totalScore += q.score; answeredCount++; }
+                if (!dimensionScores[q.category]) { dimensionScores[q.category] = { total: 0, count: 0 }; }
+                if (q.score > 0) { dimensionScores[q.category].total += q.score; dimensionScores[q.category].count++; }
+            });
+
+            var averageScore = answeredCount > 0 ? (totalScore / answeredCount).toFixed(1) : 0;
+
+            // 更新进度区
+            document.getElementById('answeredCount').textContent = answeredCount;
+            document.getElementById('progressFill').style.width = (answeredCount / 16 * 100) + '%';
+            document.getElementById('progressTip').textContent = answeredCount < 16 ? '请完成所有题目评分后查看结果' : '恭喜！所有题目已完成，请查看下方结果';
+            document.getElementById('progressSection').style.display = 'block';
+
+            // 全部答完才显示结果区
+            if (answeredCount >= 16) { document.getElementById('resultsSection').style.display = 'block'; }
+            else { document.getElementById('resultsSection').style.display = 'none'; }
+
+            // 更新综合评级
+            var badge = '--', desc = '--';
+            if (answeredCount >= 16) {
+                if (averageScore >= 4.5) { badge = '强烈推荐录用'; desc = '综合素质突出，建议优先录用'; }
+                else if (averageScore >= 3.5) { badge = '建议录用'; desc = '整体符合要求，需关注短板维度'; }
+                else if (averageScore >= 2.5) { badge = '谨慎考虑'; desc = '多项指标偏弱，需深入评估后再决定'; }
+                else if (averageScore >= 1.5) { badge = '不建议录用'; desc = '核心能力明显不足，录用风险较高'; }
+                else { badge = '强烈不建议录用'; desc = '各项指标严重不达标，不建议继续推进'; }
+            }
+            document.getElementById('overallBadge').textContent = badge;
+            document.getElementById('overallDesc').textContent = desc;
+            document.getElementById('overallAvg').textContent = answeredCount >= 16 ? '综合评分：' + averageScore + ' 分' : '综合评分：--';
+
+            generateRadarChart(dimensionScores);
+            generateDimensionAnalysis(dimensionScores);
+        }
+
+        // ============ 维度分析 ============
+        function generateDimensionAnalysis(dimensionScores) {
+            var dimensionOrder = ['通用能力', '销售专业', '情景模拟', '性格/动机'];
+            dimensionOrder.forEach(function(dim, index) {
+                var num = index + 1;
+                var scoreEl = document.getElementById('dim' + num + 'Score');
+                var gradeEl = document.getElementById('dim' + num + 'Grade');
+                var cardEl = document.getElementById('dim' + num + 'Card');
+                var data = dimensionScores[dim];
+                var avg = data && data.count > 0 ? (data.total / data.count).toFixed(1) : '0.0';
+                var avgNum = parseFloat(avg);
+                var grade = '--', gradeClass = '';
+                if (avgNum >= 4) { grade = '优秀'; gradeClass = 'excellent'; }
+                else if (avgNum >= 3) { grade = '良好'; gradeClass = 'good'; }
+                else if (avgNum >= 2) { grade = '一般'; gradeClass = 'average'; }
+                else { grade = '需改进'; gradeClass = 'poor'; }
+                scoreEl.textContent = avg;
+                gradeEl.textContent = grade;
+                cardEl.className = 'dim-card ' + gradeClass;
+            });
+        }
+
+        // ============ 雷达图 ============
+        function generateRadarChart(dimensionScores) {
+            var canvas = document.getElementById('radarChart');
+            var ctx = canvas.getContext('2d');
+            var dimensions = ['通用能力', '销售专业', '情景模拟', '性格/动机'];
+            var values = dimensions.map(function(dim) { var data = dimensionScores[dim]; return data && data.count > 0 ? (data.total / data.count) : 0; });
+
+            var centerX = 200, centerY = 200, maxRadius = 150;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 画背景网格
+            for (var i = 1; i <= 5; i++) {
+                ctx.beginPath();
+                var radius = maxRadius * i / 5;
+                for (var j = 0; j < dimensions.length; j++) {
+                    var angle = (Math.PI * 2 * j / dimensions.length) - Math.PI / 2;
+                    var x = centerX + radius * Math.cos(angle);
+                    var y = centerY + radius * Math.sin(angle);
+                    if (j === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                }
+                ctx.closePath(); ctx.strokeStyle = '#e0e0e0'; ctx.stroke();
+            }
+
+            // 画轴线
+            dimensions.forEach(function(dim, i) {
+                var angle = (Math.PI * 2 * i / dimensions.length) - Math.PI / 2;
+                ctx.beginPath(); ctx.moveTo(centerX, centerY);
+                ctx.lineTo(centerX + maxRadius * Math.cos(angle), centerY + maxRadius * Math.sin(angle));
+                ctx.strokeStyle = '#ccc'; ctx.stroke();
+
+                var labelX = centerX + (maxRadius + 20) * Math.cos(angle);
+                var labelY = centerY + (maxRadius + 20) * Math.sin(angle);
+                ctx.font = '14px Microsoft YaHei'; ctx.textAlign = 'center'; ctx.fillStyle = '#333';
+                ctx.fillText(dim, labelX, labelY);
+            });
+
+            // 画数据区域
+            ctx.beginPath();
+            values.forEach(function(val, i) {
+                var angle = (Math.PI * 2 * i / dimensions.length) - Math.PI / 2;
+                var radius = (val / 5) * maxRadius;
+                var x = centerX + radius * Math.cos(angle);
+                var y = centerY + radius * Math.sin(angle);
+                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            });
+            ctx.closePath(); ctx.fillStyle = 'rgba(102, 126, 234, 0.3)'; ctx.fill();
+            ctx.strokeStyle = '#667eea'; ctx.lineWidth = 2; ctx.stroke();
+
+            // 画数据点
+            values.forEach(function(val, i) {
+                var angle = (Math.PI * 2 * i / dimensions.length) - Math.PI / 2;
+                var radius = (val / 5) * maxRadius;
+                var x = centerX + radius * Math.cos(angle);
+                var y = centerY + radius * Math.sin(angle);
+                ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fillStyle = '#667eea'; ctx.fill();
+            });
+        }
+
+        // ============ 管理面板 ============
+        var adminPassword = 'yijing2026';
+        var isAdminVerified = false;
+
+        function showSettings() {
+            document.getElementById('adminPanel').style.display = 'flex';
+        }
+
+        function hideSettings() {
+            document.getElementById('adminPanel').style.display = 'none';
+            // 重置状态，以便下次打开时重新验证
+            document.getElementById('passwordSection').style.display = 'block';
+            document.getElementById('adminContent').style.display = 'none';
+            document.getElementById('adminPassword').value = '';
+            isAdminVerified = false;
+            if (isEditMode) { disableEditMode(); }
+        }
+
+        function verifyAdminPassword() {
+            var pwd = document.getElementById('adminPassword').value;
+            if (pwd === adminPassword) {
+                isAdminVerified = true;
+                document.getElementById('passwordSection').style.display = 'none';
+                document.getElementById('adminContent').style.display = 'block';
+                loadQuestionsToEditor();
+                showAdminTab('position');
+            } else {
+                alert('密码错误！');
+            }
+        }
+
+        function showAdminTab(tabName) {
+            document.getElementById('tabPosition').style.display = 'none';
+            document.getElementById('tabQuestions').style.display = 'none';
+            
+            var tabId = 'tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1);
+            document.getElementById(tabId).style.display = 'block';
+            
+            if (tabName === 'position') {
+                renderPositionList();
+            }
+            if (tabName === 'questions') {
+                loadQuestionsToEditor();
+            }
+            
+            // 更新按钮状态
+            document.querySelectorAll('.tab-btn').forEach(function(btn) {
+                btn.classList.remove('active');
+                btn.style.background = '#f5f5f5';
+                btn.style.color = '#333';
+                btn.style.fontWeight = 'normal';
+            });
+            
+            var activeBtn = document.getElementById('tabBtn' + tabName.charAt(0).toUpperCase() + tabName.slice(1));
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+                activeBtn.style.background = '#667eea';
+                activeBtn.style.color = '#fff';
+                activeBtn.style.fontWeight = 'bold';
+            }
+        }
+
+        var currentEditPosition = '销售';
+
+        function loadQuestionsToEditor() {
+            var position = document.getElementById('questionEditPosition').value;
+            currentEditPosition = position;
+            var qs = questionBank[position] || salesQuestions;
+            document.getElementById('questionsEditor').value = JSON.stringify(qs, null, 2);
+        }
+
+        // ========== 岗位配置管理 ==========
+        var positionConfigs = {
+            '销售': { name: '销售岗位', coreDim: '销售专业', weights: { 1: 0.20, 2: 0.40, 3: 0.20, 4: 0.20 } },
+            '管理': { name: '管理岗位', coreDim: '管理专业', weights: { 1: 0.30, 2: 0.30, 3: 0.20, 4: 0.20 } }
+        };
+
+        function renderPositionList() {
+            var listEl = document.getElementById('positionList');
+            var html = '<table style="width:100%;border-collapse:collapse;margin-top:10px;">';
+            html += '<tr style="background:#f5f5f5;"><th style="padding:10px;text-align:left;border:1px solid #e0e0e0;">岗位</th><th style="padding:10px;text-align:left;border:1px solid #e0e0e0;">核心维度</th><th style="padding:10px;text-align:left;border:1px solid #e0e0e0;">操作</th></tr>';
+            for (var key in positionConfigs) {
+                var cfg = positionConfigs[key];
+                html += '<tr>';
+                html += '<td style="padding:10px;border:1px solid #e0e0e0;">' + cfg.name + '</td>';
+                html += '<td style="padding:10px;border:1px solid #e0e0e0;">' + cfg.coreDim + '</td>';
+                html += '<td style="padding:10px;border:1px solid #e0e0e0;">';
+                html += '<button class="btn btn-primary" onclick="editPosition(\'' + key + '\')" style="padding:5px 12px;font-size:12px;margin-right:5px;">编辑</button>';
+                html += '</td></tr>';
+            }
+            html += '</table>';
+            listEl.innerHTML = html;
+        }
+
+        function addNewPosition() {
+            document.getElementById('positionEditorTitle').innerText = '新增岗位配置';
+            document.getElementById('editPositionKey').value = '';
+            document.getElementById('editPositionName').value = '';
+            document.getElementById('editCoreDim').value = '2';
+            document.getElementById('deletePositionBtn').style.display = 'none';
+            renderWeightInputs({ 1: 0.25, 2: 0.25, 3: 0.25, 4: 0.25 });
+            document.getElementById('positionEditor').style.display = 'block';
+        }
+
+        function editPosition(key) {
+            var cfg = positionConfigs[key];
+            document.getElementById('positionEditorTitle').innerText = '编辑【' + cfg.name + '】配置';
+            document.getElementById('editPositionKey').value = key;
+            document.getElementById('editPositionName').value = cfg.name;
+            document.getElementById('deletePositionBtn').style.display = 'block';
+            renderWeightInputs(cfg.weights);
+            document.getElementById('positionEditor').style.display = 'block';
+        }
+
+        function renderWeightInputs(weights) {
+            var container = document.getElementById('weightInputs');
+            var dimNames = ['通用能力', '销售专业', '情景模拟', '性格/动机'];
+            var html = '';
+            for (var d = 1; d <= 4; d++) {
+                html += '<div style="display:flex;align-items:center;margin-bottom:8px;">';
+                html += '<label style="width:80px;">' + dimNames[d-1] + '</label>';
+                html += '<input type="range" min="0" max="100" value="' + (weights[d] * 100) + '" onchange="updateWeight(' + d + ', this.value)" style="flex:1;margin:0 10px;">';
+                html += '<input type="number" id="weight_' + d + '" value="' + (weights[d] * 100) + '" onchange="updateWeightFromNum(' + d + ', this.value)" style="width:60px;padding:5px;border:1px solid #e0e0e0;border-radius:4px;">';
+                html += '<span style="margin-left:5px;">%</span>';
+                html += '</div>';
+            }
+            container.innerHTML = html;
+            updateWeightTotal();
+        }
+
+        function updateWeight(dim, val) {
+            document.getElementById('weight_' + dim).value = val;
+            updateWeightTotal();
+        }
+
+        function updateWeightFromNum(dim, val) {
+            document.querySelector('input[type="range"][onchange*="' + dim + '"]').value = val;
+            updateWeightTotal();
+        }
+
+        function updateWeightTotal() {
+            var total = 0;
+            for (var d = 1; d <= 4; d++) {
+                var val = parseFloat(document.getElementById('weight_' + d).value) || 0;
+                total += val;
+            }
+            var totalEl = document.getElementById('weightTotal');
+            totalEl.innerHTML = '当前权重总和：<span style="color:' + (total === 100 ? '#4caf50' : '#e74c3c') + ';font-weight:bold;">' + total + '%</span>' + (total !== 100 ? ' <span style="color:#e74c3c;">（需等于100%）</span>' : '');
+        }
+
+        function savePositionConfig() {
+            var key = document.getElementById('editPositionKey').value;
+            var name = document.getElementById('editPositionName').value.trim();
+            if (!name) {
+                alert('请输入岗位名称');
+                return;
+            }
+            var weights = {};
+            for (var d = 1; d <= 4; d++) {
+                weights[d] = parseFloat(document.getElementById('weight_' + d).value) / 100;
+            }
+            var total = 0;
+            for (var d = 1; d <= 4; d++) total += weights[d] * 100;
+            if (Math.abs(total - 100) > 0.1) {
+                alert('权重总和必须等于100%');
+                return;
+            }
+            var saveKey = key || name;
+            positionConfigs[saveKey] = { name: name, weights: weights };
+            localStorage.setItem('position_configs', JSON.stringify(positionConfigs));
+            document.getElementById('positionEditor').style.display = 'none';
+            renderPositionList();
+            alert('岗位配置已保存！');
+        }
+
+        function deletePositionConfig() {
+            var key = document.getElementById('editPositionKey').value;
+            if (!key) {
+                alert('请先选择一个岗位进行编辑');
+                return;
+            }
+            if (Object.keys(positionConfigs).length <= 1) {
+                alert('至少需要保留一个岗位配置！');
+                return;
+            }
+            if (confirm('确定要删除 "' + positionConfigs[key].name + '" 岗位配置吗？')) {
+                delete positionConfigs[key];
+                localStorage.setItem('position_configs', JSON.stringify(positionConfigs));
+                document.getElementById('positionEditor').style.display = 'none';
+                renderPositionList();
+                alert('岗位配置已删除');
+            }
+        }
+
+        function cancelPositionEdit() {
+            document.getElementById('positionEditor').style.display = 'none';
+        }
+
+        function loadPositionConfigs() {
+            var saved = localStorage.getItem('position_configs');
+            if (saved) {
+                try {
+                    var loaded = JSON.parse(saved);
+                    for (var key in loaded) {
+                        positionConfigs[key] = loaded[key];
+                    }
+                } catch (e) {
+                    console.log('加载岗位配置失败');
+                }
+            }
+        }
+
+        function loadSavedQuestions() {
+            // 加载销售岗位题目
+            var salesSaved = localStorage.getItem('question_bank_销售');
+            if (salesSaved) {
+                try {
+                    questionBank['销售'] = JSON.parse(salesSaved);
+                } catch (e) {
+                    console.log('加载销售题目失败');
+                }
+            }
+            // 加载管理岗位题目
+            var mgmtSaved = localStorage.getItem('question_bank_管理');
+            if (mgmtSaved) {
+                try {
+                    questionBank['管理'] = JSON.parse(mgmtSaved);
+                } catch (e) {
+                    console.log('加载管理题目失败');
+                }
+            }
+        }
+
+        function saveQuestionsFromEditor() {
+            try {
+                var newQuestions = JSON.parse(document.getElementById('questionsEditor').value);
+                var position = document.getElementById('questionEditPosition').value;
+                questionBank[position] = newQuestions;
+                localStorage.setItem('question_bank_' + position, JSON.stringify(newQuestions));
+                // 如果当前正在测评的岗位与编辑的岗位一致，则更新当前题目
+                if (position === currentEditPosition) {
+                    questions = newQuestions;
+                    renderQuestions();
+                }
+                alert('题目保存成功！');
+            } catch (e) {
+                alert('JSON格式错误：' + e.message);
+            }
+        }
+
+        // ============ 编辑模式 ============
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            var btnText = document.getElementById('editModeBtnText');
+            if (isEditMode) { enableEditMode(); btnText.textContent = '保存并退出编辑'; }
+            else { disableEditMode(); btnText.textContent = '编辑题目'; }
+        }
+
+        function enableEditMode() {
+            questions.forEach(function(q) {
+                var card = document.getElementById('question-' + q.id);
+                card.classList.add('edit-mode');
+                
+                var titleDiv = card.querySelector('.question-title');
+                titleDiv.innerHTML = 'Q' + q.id + '. <div class="edit-field"><label>题目内容</label><textarea class="edit-textarea q-edit" data-qid="' + q.id + '" data-field="title">' + q.title + '</textarea></div>';
+                
+                var observationDiv = card.querySelector('.observation-points');
+                observationDiv.innerHTML = '<strong>观察要点：</strong><div class="edit-field"><textarea class="edit-textarea q-edit" data-qid="' + q.id + '" data-field="observationPoints">' + q.observationPoints + '</textarea></div>';
+                
+                var highDiv = card.querySelector('.answer-high');
+                highDiv.innerHTML = '<strong>🌟 高分回答特征（4-5分）：</strong><div class="edit-field"><textarea class="edit-textarea q-edit" data-qid="' + q.id + '" data-field="highAnswer">' + q.highAnswer + '</textarea></div>';
+                
+                var mediumDiv = card.querySelector('.answer-medium');
+                mediumDiv.innerHTML = '<strong>⚠️ 一般回答特征（2-3分）：</strong><div class="edit-field"><textarea class="edit-textarea q-edit" data-qid="' + q.id + '" data-field="mediumAnswer">' + q.mediumAnswer + '</textarea></div>';
+                
+                var lowDiv = card.querySelector('.answer-low');
+                lowDiv.innerHTML = '<strong>🚫 需要警惕的回答（1分）：</strong><div class="edit-field"><textarea class="edit-textarea q-edit" data-qid="' + q.id + '" data-field="lowAnswer">' + q.lowAnswer + '</textarea></div>';
+            });
+
+            // 绑定编辑textarea的change事件
+            document.querySelectorAll('.q-edit').forEach(function(textarea) {
+                textarea.addEventListener('change', function() {
+                    var qid = parseInt(this.getAttribute('data-qid'));
+                    var field = this.getAttribute('data-field');
+                    var value = this.value;
+                    updateQuestion(qid, field, value);
+                });
+            });
+        }
+
+        function disableEditMode() {
+            questions.forEach(function(q) { var card = document.getElementById('question-' + q.id); card.classList.remove('edit-mode'); });
+            renderQuestions();
+        }
+
+        function updateQuestion(id, field, value) {
+            questions.forEach(function(q) { if (q.id === id) { q[field] = value; } });
+        }
+
+        function resetQuestions() {
+            if (confirm('确定要重置为默认题目吗？当前修改将丢失。')) {
+                var position = document.getElementById('questionEditPosition').value;
+                var defaultQs = position === '管理' ? managementQuestions : salesQuestions;
+                questionBank[position] = JSON.parse(JSON.stringify(defaultQs));
+                localStorage.removeItem('question_bank_' + position);
+                loadQuestionsToEditor();
+                alert('已重置为默认题目');
+            }
+        }
+
+        // ============ 生成报告 ============
+        function generateReport() {
+            var unscored = questions.filter(function(q) { return q.score === 0; });
+            if (unscored.length > 0) {
+                var unscoredList = unscored.map(function(q) { return 'Q' + q.id; }).join('、');
+                alert('还有 ' + unscored.length + ' 道题未评分：' + unscoredList + '\n\n面试测评需全部题目评分后才能生成报告，请补充评分后再试。');
+                var firstUnscored = document.getElementById('question-' + unscored[0].id);
+                if (firstUnscored) { firstUnscored.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+                return;
+            }
+
+            var name = document.getElementById('candidateName').value || '未填写';
+            var position = document.getElementById('position').value || '未填写';
+            var date = document.getElementById('interviewDate').value || '未填写';
+            var interviewer = document.getElementById('interviewerName').value || '未填写';
+            var interviewerTitle = document.getElementById('interviewerPosition').value || '未填写';
+
+            // 计算各维度分数
+            var dimensionScores = {};
+            var dimensionNames = ['通用能力', '销售专业', '情景模拟', '性格/动机'];
+            dimensionNames.forEach(function(dim) { dimensionScores[dim] = { total: 0, count: 0 }; });
+            questions.forEach(function(q) {
+                if (q.score > 0 && dimensionScores[q.category]) {
+                    dimensionScores[q.category].total += q.score;
+                    dimensionScores[q.category].count++;
+                }
+            });
+
+            // 计算加权总分（销售岗位权重：通用20%，销售40%，情景20%，性格20%）
+            var weights = { '通用能力': 0.20, '销售专业': 0.40, '情景模拟': 0.20, '性格/动机': 0.20 };
+            var weightedTotal = 0;
+            dimensionNames.forEach(function(dim) {
+                var avg = dimensionScores[dim].count > 0 ? (dimensionScores[dim].total / dimensionScores[dim].count) : 0;
+                weightedTotal += avg * weights[dim];
+            });
+            var avg = weightedTotal.toFixed(2);
+
+            // 确定评级
+            var rating = '待评分';
+            var ratingDesc = '请完成所有评分后查看综合评级';
+            var dimAvgs = {};
+            dimensionNames.forEach(function(dim) {
+                dimAvgs[dim] = dimensionScores[dim].count > 0 ? (dimensionScores[dim].total / dimensionScores[dim].count) : 0;
+            });
+            var salesAvg = dimAvgs['销售专业'];
+            if (questions.filter(function(q){return q.score>0;}).length >= 16) {
+                if (avg >= 4.0 && salesAvg >= 4.0) { rating = '强烈推荐录用'; ratingDesc = '综合素质优秀，销售专业能力突出，建议优先录用'; }
+                else if (avg >= 3.2 && salesAvg >= 3.0) { rating = '建议录用'; ratingDesc = '综合评分良好，建议关注短板维度培训'; }
+                else if (avg >= 2.5 && salesAvg >= 2.5) { rating = '谨慎考虑'; ratingDesc = '核心能力有短板，建议加强培训或另行评估'; }
+                else { rating = '不建议录用'; ratingDesc = '核心能力明显不足，录用风险较高'; }
+            }
+
+            // 生成报告HTML（与试用版格式一致）
+            var reportHtml = '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>面试报告 - ' + name + '</title>';
+            reportHtml = reportHtml + '<style>';
+            reportHtml = reportHtml + '*{margin:0;padding:0;box-sizing:border-box}body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#f5f5f5;padding:20px}';
+            reportHtml = reportHtml + '.report{max-width:900px;margin:0 auto;background:#fff;border-radius:15px;overflow:hidden;box-shadow:0 5px 20px rgba(0,0,0,0.1)}';
+            reportHtml = reportHtml + '.header{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;padding:40px;text-align:center}';
+            reportHtml = reportHtml + '.header h1{font-size:28px;margin-bottom:10px}.header .brand{font-size:16px;opacity:0.9}';
+            reportHtml = reportHtml + '.body{padding:30px}.section{margin-bottom:30px}.section h2{color:#667eea;font-size:20px;margin-bottom:15px;border-bottom:2px solid #667eea;padding-bottom:10px}';
+            reportHtml = reportHtml + '.info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:15px}.info-item{background:#f9f9f9;padding:15px;border-radius:8px}.info-item label{font-size:12px;color:#666;display:block}.info-item span{font-size:16px;font-weight:bold;color:#333}';
+            reportHtml = reportHtml + '.info-row2{display:grid;grid-template-columns:repeat(2,1fr);gap:15px}';
+            reportHtml = reportHtml + 'table{width:100%;border-collapse:collapse;margin-bottom:15px}th,td{border:1px solid #e0e0e0;padding:12px;text-align:left;font-size:14px}th{background:#f5f5f5;font-weight:bold}';
+            reportHtml = reportHtml + '.score-high{color:#4caf50;font-weight:bold}.score-medium{color:#ff9800;font-weight:bold}.score-low{color:#f44336;font-weight:bold}';
+            reportHtml = reportHtml + '.rating-box{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;padding:30px;text-align:center;border-radius:10px}.rating-box h3{font-size:24px;margin-bottom:10px}.rating-box p{font-size:16px;opacity:0.9}.rating-box .avg-score{font-size:18px;margin-top:10px;opacity:0.9}';
+            reportHtml = reportHtml + '.dim-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:15px}.dim-item{padding:15px;border-radius:8px;border:2px solid}.dim-item.excellent{background:#e8f5e9;border-color:#4caf50}.dim-item.good{background:#e3f2fd;border-color:#2196f3}.dim-item.average{background:#fff8e1;border-color:#ff9800}.dim-item.poor{background:#ffebee;border-color:#f44336}';
+            reportHtml = reportHtml + '.dim-item h4{font-size:14px;margin-bottom:8px}.dim-item .score{font-size:28px;font-weight:bold}.dim-item.excellent .score{color:#4caf50}.dim-item.good .score{color:#2196f3}.dim-item.average .score{color:#ff9800}.dim-item.poor .score{color:#f44336}';
+            reportHtml = reportHtml + '.actions{padding:20px;text-align:center;background:#f9f9f9}.btn{padding:12px 30px;border:none;border-radius:8px;font-size:16px;cursor:pointer;margin:0 10px;font-weight:bold}.btn-primary{background:#667eea;color:#fff}.btn-success{background:#27ae60;color:#fff}.btn-secondary{background:#fff;color:#667eea;border:2px solid #667eea}';
+            reportHtml = reportHtml + '.footer{padding:20px;text-align:center;color:#999;font-size:12px;border-top:1px solid #e0e0e0}';
+            reportHtml = reportHtml + '@media print{.actions{display:none}body{background:#fff}}';
+            reportHtml = reportHtml + '</style></head><body>';
+
+            reportHtml = reportHtml + '<div class="report">';
+            reportHtml = reportHtml + '<div class="header"><h1>面试报告</h1><p class="brand">靖化论管理咨询 - 专业面试系统</p></div>';
+            reportHtml = reportHtml + '<div class="body">';
+
+            // 候选人信息 - 第一排（3个）
+            reportHtml = reportHtml + '<div class="section"><h2>候选人信息</h2><div class="info-grid">';
+            reportHtml = reportHtml + '<div class="info-item"><label>候选人姓名：</label><span>' + name + '</span></div>';
+            reportHtml = reportHtml + '<div class="info-item"><label>应聘岗位：</label><span>' + position + '</span></div>';
+            reportHtml = reportHtml + '<div class="info-item"><label>面试日期：</label><span>' + date + '</span></div>';
+            reportHtml = reportHtml + '</div>';
+            // 候选人信息 - 第二排（2个）
+            reportHtml = reportHtml + '<div class="info-row2">';
+            reportHtml = reportHtml + '<div class="info-item"><label>面试官：</label><span>' + interviewer + '</span></div>';
+            reportHtml = reportHtml + '<div class="info-item"><label>面试官职位：</label><span>' + interviewerTitle + '</span></div>';
+            reportHtml = reportHtml + '</div></div>';
+
+            // 综合评级（含综合评分）
+            reportHtml = reportHtml + '<div class="section"><h2>综合评级</h2>';
+            reportHtml = reportHtml + '<div class="rating-box"><h3>' + rating + '</h3><p>' + ratingDesc + '</p><p class="avg-score">综合评分：' + avg + '/5.0</p><p style="font-size:12px;color:rgba(255,255,255,0.7);margin-top:10px;">* 本评分仅反映面试表现，录用决策应结合学历、背景调查、团队匹配度等因素综合考量</p></div></div>';
+
+            // 维度分析
+            var dimGrades = ['优秀', '良好', '一般', '需改进'];
+            reportHtml = reportHtml + '<div class="section"><h2>四维度能力分析</h2><div class="dim-grid">';
+            dimensionNames.forEach(function(dim) {
+                var scoreVal = dimensionScores[dim].count > 0 ? (dimensionScores[dim].total / dimensionScores[dim].count) : 0;
+                var gradeClass = scoreVal >= 4 ? 'excellent' : (scoreVal >= 3 ? 'good' : (scoreVal >= 2 ? 'average' : 'poor'));
+                var gradeIdx = scoreVal >= 4 ? 0 : (scoreVal >= 3 ? 1 : (scoreVal >= 2 ? 2 : 3));
+                reportHtml = reportHtml + '<div class="dim-item ' + gradeClass + '"><h4>' + dim + '</h4>';
+                reportHtml = reportHtml + '<div class="score">' + scoreVal.toFixed(1) + '</div><p>等级：' + dimGrades[gradeIdx] + '</p></div>';
+            });
+            reportHtml = reportHtml + '</div></div>';
+
+            // 详细评分表
+            reportHtml = reportHtml + '<div class="section"><h2>详细评分记录</h2>';
+            reportHtml = reportHtml + '<table><thead><tr><th>题号</th><th>题目</th><th>维度</th><th>评分</th><th>观察记录</th></tr></thead><tbody>';
+            questions.forEach(function(q) {
+                var score = q.score || '-';
+                var notesEl = document.getElementById('notes-' + q.id);
+                var obs = notesEl ? notesEl.value.trim() : '-';
+                var scoreClass = '';
+                if (q.score >= 4) scoreClass = 'score-high';
+                else if (q.score >= 2) scoreClass = 'score-medium';
+                else if (q.score > 0) scoreClass = 'score-low';
+                reportHtml = reportHtml + '<tr>';
+                reportHtml = reportHtml + '<td>Q' + q.id + '</td>';
+                reportHtml = reportHtml + '<td>' + q.title + '</td>';
+                reportHtml = reportHtml + '<td>' + q.category + '</td>';
+                reportHtml = reportHtml + '<td class="' + scoreClass + '">' + score + '</td>';
+                reportHtml = reportHtml + '<td>' + (obs || '-') + '</td>';
+                reportHtml = reportHtml + '</tr>';
+            });
+            reportHtml = reportHtml + '</tbody></table></div>';
+
+            // 报告底部
+            reportHtml = reportHtml + '</div>';
+            reportHtml = reportHtml + '<div class="footer">';
+            reportHtml = reportHtml + '<p>靖化论管理咨询 | 联系人：依靖老师 | 电话/微信：13067243944</p>';
+            reportHtml = reportHtml + '<p>如需进一步人才评估或管理咨询支持，欢迎联系</p>';
+            reportHtml = reportHtml + '</div>';
+            reportHtml = reportHtml + '</div>';
+
+            // 操作按钮
+            reportHtml = reportHtml + '<div class="actions">';
+            reportHtml = reportHtml + '<button class="btn btn-success" onclick="showSaveDialog()">导出Word</button>';
+            reportHtml = reportHtml + '<button class="btn btn-primary" onclick="window.print()">打印报告</button>';
+            reportHtml = reportHtml + '<button class="btn btn-secondary" onclick="window.close()">关闭</button>';
+            reportHtml = reportHtml + '</div>';
+
+            // 导出文件对话框
+            reportHtml = reportHtml + '<div id="saveDialog" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;justify-content:center;align-items:center;">';
+            reportHtml = reportHtml + '<div style="background:#fff;border-radius:15px;padding:30px;max-width:500px;width:90%;">';
+            reportHtml = reportHtml + '<h3 style="margin-bottom:20px;color:#333;">导出文件</h3>';
+            reportHtml = reportHtml + '<p style="margin-bottom:10px;color:#666;font-size:14px;">请输入文件名：</p>';
+            reportHtml = reportHtml + '<input type="text" id="fileNameInput" style="width:100%;padding:12px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;margin-bottom:15px;" value="' + date + '_' + name + '">';
+            reportHtml = reportHtml + '<div style="display:flex;gap:10px;justify-content:flex-end;">';
+            reportHtml = reportHtml + '<button class="btn btn-secondary" onclick="hideSaveDialog()">取消</button>';
+            reportHtml = reportHtml + '<button class="btn btn-success" onclick="doExportWord()">确认导出</button>';
+            reportHtml = reportHtml + '</div></div></div>';
+
+            // 导出脚本
+            reportHtml = reportHtml + '<script>';
+            reportHtml = reportHtml + 'var savedContent="";';
+            reportHtml = reportHtml + 'function showSaveDialog(){';
+            reportHtml = reportHtml + 'document.getElementById("saveDialog").style.display="flex";';
+            reportHtml = reportHtml + 'savedContent=document.querySelector(".report").innerHTML;';
+            reportHtml = reportHtml + '}';
+            reportHtml = reportHtml + 'function hideSaveDialog(){';
+            reportHtml = reportHtml + 'document.getElementById("saveDialog").style.display="none";';
+            reportHtml = reportHtml + '}';
+            reportHtml = reportHtml + 'function doExportWord(){';
+            reportHtml = reportHtml + 'var fn=document.getElementById("fileNameInput").value.trim()||"面试报告";';
+            reportHtml = reportHtml + 'var tmpDiv=document.createElement("div");';
+            reportHtml = reportHtml + 'tmpDiv.innerHTML=savedContent;';
+            // 把四维度卡片区域替换为Word友好的表格
+            reportHtml = reportHtml + 'var dimGrid=tmpDiv.querySelector(".dim-grid");';
+            reportHtml = reportHtml + 'if(dimGrid){';
+            reportHtml = reportHtml + 'var items=dimGrid.querySelectorAll(".dim-item");';
+            reportHtml = reportHtml + 'var tableHtml="<table style=\'width:100%;border-collapse:collapse;margin-bottom:20px;\'><tr>";';
+            reportHtml = reportHtml + 'items.forEach(function(item){tableHtml=tableHtml+"<th style=\'padding:10px;background:#f0f0f0;\'>"+item.querySelector("h4").textContent+"</th>";});';
+            reportHtml = reportHtml + 'tableHtml=tableHtml+"</tr><tr>";';
+            reportHtml = reportHtml + 'items.forEach(function(item){tableHtml=tableHtml+"<td style=\'padding:15px;text-align:center;\'><strong style=\'font-size:18px;\'>"+item.querySelector(".score").textContent+"</strong><br>"+item.querySelector("p").textContent+"</td>";});';
+            reportHtml = reportHtml + 'tableHtml=tableHtml+"</tr></table>";';
+            reportHtml = reportHtml + 'dimGrid.insertAdjacentHTML("beforebegin",tableHtml);';
+            reportHtml = reportHtml + 'dimGrid.remove();';
+            reportHtml = reportHtml + '}';
+            reportHtml = reportHtml + 'var content=tmpDiv.innerHTML;';
+            reportHtml = reportHtml + 'var sty="body{font-family:\'Microsoft YaHei\',sans-serif;padding:40px;line-height:1.8;}";';
+            reportHtml = reportHtml + 'sty=sty+"h1{color:#667eea;font-size:24px;text-align:center;margin-bottom:20px;}";';
+            reportHtml = reportHtml + 'sty=sty+"h2{color:#667eea;font-size:18px;border-bottom:2px solid #667eea;padding-bottom:10px;margin:20px 0 15px;}";';
+            reportHtml = reportHtml + 'sty=sty+"table{width:100%;border-collapse:collapse;margin-bottom:20px;}th,td{border:1px solid #ddd;padding:10px;text-align:left;font-size:13px;}th{background:#f5f5f5;font-weight:bold;}";';
+            reportHtml = reportHtml + 'sty=sty+"</style>";';
+            reportHtml = reportHtml + 'var html="<!DOCTYPE html><html><head><meta charset=\'UTF-8\'><title>"+fn+"</title><style>"+sty+"</style></head><body>"+content+"</body></html>";';
+            reportHtml = reportHtml + 'var blob=new Blob([html],{type:"application/msword"});';
+            reportHtml = reportHtml + 'var url=URL.createObjectURL(blob);';
+            reportHtml = reportHtml + 'var a=document.createElement("a");';
+            reportHtml = reportHtml + 'a.href=url;';
+            reportHtml = reportHtml + 'a.download=fn+".doc";';
+            reportHtml = reportHtml + 'a.click();';
+            reportHtml = reportHtml + 'URL.revokeObjectURL(url);';
+            reportHtml = reportHtml + 'hideSaveDialog();';
+            reportHtml = reportHtml + 'setTimeout(function(){alert("导出成功！");},100);';
+            reportHtml = reportHtml + '}';
+            reportHtml = reportHtml + '<\/script>';
+
+            reportHtml = reportHtml + '</body></html>';
+
+            // 自动保存报告到localStorage（仅保留30天）
+            var reportRecord = {
+                id: Date.now(),
+                savedAt: Date.now(), // 用于30天清理
+                date: new Date().toLocaleString('zh-CN'),
+                candidateName: name,
+                position: position,
+                content: reportHtml
+            };
+            var savedReports = JSON.parse(localStorage.getItem('interviewReports') || '[]');
+            savedReports.unshift(reportRecord); // 新报告放最前
+            // 只保留最近30天数据
+            var thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+            savedReports = savedReports.filter(function(r) { return r.savedAt > thirtyDaysAgo; });
+            localStorage.setItem('interviewReports', JSON.stringify(savedReports));
+
+            // 在新窗口打开报告
+            var reportWindow = window.open('', '_blank', 'width=1000,height=800,scrollbars=yes');
+            reportWindow.document.write(reportHtml);
+            reportWindow.document.close();
+        }
+
+        function exportReport() { generateReport(); }
+        function printReport() { window.print(); }
+
+        // ============ 历史报告 ============
+        function showReportHistory() {
+            var savedReports = JSON.parse(localStorage.getItem('interviewReports') || '[]');
+            var listHtml = '<p style="font-size:12px;color:#999;margin-bottom:15px;padding:8px 12px;background:#f9f9f9;border-radius:6px;">📌 报告仅保留最近30天数据，超期将自动清理</p>';
+            if (savedReports.length === 0) {
+                listHtml = '<p style="text-align:center;color:#999;padding:40px;">暂无历史报告</p>';
+            } else {
+                savedReports.forEach(function(r, idx) {
+                    listHtml += '<div style="padding:15px;border:1px solid #e0e0e0;border-radius:8px;margin-bottom:10px;">';
+                    listHtml += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+                    listHtml += '<div><strong>' + r.candidateName + '</strong> - ' + r.position + '<br><small style="color:#999;">' + r.date + '</small></div>';
+                    listHtml += '<button onclick="openReport(' + idx + ')" style="padding:8px 16px;background:#667eea;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">查看</button>';
+                    listHtml += '</div></div>';
+                });
+            }
+            document.getElementById('historyList').innerHTML = listHtml;
+            document.getElementById('historyPanel').style.display = 'flex';
+        }
+        function hideReportHistory() {
+            document.getElementById('historyPanel').style.display = 'none';
+        }
+        function openReport(idx) {
+            var savedReports = JSON.parse(localStorage.getItem('interviewReports') || '[]');
+            if (savedReports[idx]) {
+                var reportWindow = window.open('', '_blank', 'width=1000,height=800,scrollbars=yes');
+                reportWindow.document.write(savedReports[idx].content);
+                reportWindow.document.close();
+                hideReportHistory();
+            }
+        }
+
+        // ============ 复制数据 ============
+        function copyData() {
+            var candidateName = document.getElementById('candidateName').value || '未填写';
+            var position = document.getElementById('position').value || '未填写';
+            var interviewDate = document.getElementById('interviewDate').value || '未填写';
+            var text = '销售岗位面试测评数据\n候选人：' + candidateName + '\n岗位：' + position + '\n日期：' + interviewDate + '\n\n=== 各题目得分 ===\n';
+            questions.forEach(function(q) { text += 'Q' + q.id + '. ' + q.title + ' - ' + q.score + '分\n'; });
+            text += '\n总分：' + document.getElementById('totalScore').textContent + '\n平均分：' + document.getElementById('averageScore').textContent + '\n评级：' + document.getElementById('ratingSection').textContent + '\n';
+            
+            var textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            alert('数据已复制到剪贴板，可粘贴到Excel中');
+        }
+
+        // ============ DOM加载完成后绑定所有事件 ============
+        document.addEventListener('DOMContentLoaded', function() {
+            // 加载保存的岗位配置和题目
+            loadPositionConfigs();
+            loadSavedQuestions();
+            
+            // 激活界面
+            document.getElementById('activateBtn').addEventListener('click', validateActivation);
+            document.getElementById('activationCode').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') { validateActivation(); }
+            });
+
+            // 主界面按钮
+            document.getElementById('copyDataBtn').addEventListener('click', copyData);
+            document.getElementById('showSettingsBtn').addEventListener('click', showSettings);
+            document.getElementById('generateReportBtn').addEventListener('click', generateReport);
+            document.getElementById('exportReportBtn').addEventListener('click', exportReport);
+            document.getElementById('printReportBtn').addEventListener('click', printReport);
+            
+            // 应聘岗位切换时加载对应题目
+            document.getElementById('position').addEventListener('change', function() {
+                var pos = this.value;
+                
+                // 选择"其他"岗位，显示定制提示
+                if (pos === '其他') {
+                    document.getElementById('questionsContainer').innerHTML = '<div style="text-align:center;padding:60px 30px;background:#fff;border-radius:15px;box-shadow:0 5px 20px rgba(0,0,0,0.08);">' +
+                        '<div style="font-size:48px;margin-bottom:20px;">🎯</div>' +
+                        '<h3 style="color:#667eea;font-size:20px;margin-bottom:15px;">需要定制岗位题库？</h3>' +
+                        '<p style="color:#666;font-size:15px;line-height:1.8;margin-bottom:20px;">' +
+                        '我们可为您定制专属面试题库<br>覆盖技术、客服、行政、财务等岗位' +
+                        '</p>' +
+                        '<div style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:15px 30px;border-radius:25px;display:inline-block;margin-bottom:20px;">' +
+                        '<span style="font-size:15px;opacity:0.9;margin-right:5px;">限时</span>' +
+                        '<span style="font-size:24px;font-weight:bold;">99元起</span>' +
+                        '<span style="font-size:14px;opacity:0.9;"> / 岗位</span>' +
+                        '</div>' +
+                        '<p style="color:#888;font-size:13px;">添加微信快速咨询</p>' +
+                        '<p style="color:#667eea;font-size:18px;font-weight:bold;margin-top:10px;">📞 13067243944</p>' +
+                        '</div>';
+                    document.getElementById('resultsSection').style.display = 'none';
+                    return;
+                }
+                
+                var key = pos === '管理岗位' ? '管理' : '销售';
+                questions = JSON.parse(JSON.stringify(questionBank[key]));
+                renderQuestions();
+                // 重置评分
+                questions.forEach(function(q) { q.score = 0; });
+                updateProgress();
+                document.getElementById('resultsSection').style.display = 'none';
+            });
+
+            // 管理面板
+            document.getElementById('closeAdminBtn').addEventListener('click', hideSettings);
+            document.getElementById('verifyAdminBtn').addEventListener('click', verifyAdminPassword);
+            document.getElementById('adminPassword').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') { verifyAdminPassword(); }
+            });
+            document.getElementById('tabBtnPosition').addEventListener('click', function() { showAdminTab('position'); });
+            document.getElementById('tabBtnQuestions').addEventListener('click', function() { showAdminTab('questions'); });
+            document.getElementById('saveQuestionsBtn').addEventListener('click', saveQuestionsFromEditor);
+            document.getElementById('resetQuestionsBtn2').addEventListener('click', resetQuestions);
+            document.getElementById('questionEditPosition').addEventListener('change', loadQuestionsToEditor);
+        });
+    </script>
+</body>
+</html>
